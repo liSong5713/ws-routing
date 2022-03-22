@@ -1,0 +1,29 @@
+{
+  "name": "ws-koa",
+  "version": "0.0.1",
+  "description": "component description",
+  "main": "./dist/index.js",
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "build": "rm -rf dist typings && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^12.20.15",
+    "@types/ws": "^8.5.3",
+    "ts-node": "^10.0.0",
+    "typescript": "^3.8.3"
+  },
+  "engine": ">12.20.1",
+  "publishConfig": {
+    "registry": "http://nexus.17usoft.com/repository/npm-fe/"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0",
+    "ws": "^8.5.0"
+  }
+}
