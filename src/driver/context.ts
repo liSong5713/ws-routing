@@ -22,7 +22,8 @@ export default class Context {
   }
   get ip() {
     const { socket } = this.req;
-    return this.req.headers['X-Forwarded-For'] || socket.remoteAddress;
+    const proxyIps = (this.req.headers['X-Forwarded-For'] as string)?.split(/\s*,\s*/) || [];
+    return proxyIps[0] || socket.remoteAddress;
   }
 
   //   ==== ws ===
