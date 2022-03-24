@@ -1,9 +1,8 @@
 import path from 'path';
-import { Action } from '../metadatas/action';
-import { Service } from 'typedi';
+
 
 // Map<target,MethodsMap>
-// MethodsMap<methodname,Option>
+// MethodsMap< ,Option>
 class Option {
   params: Array<{ name: string; order: number }>;
   namespace: string;
@@ -22,7 +21,7 @@ export function Controller(namespace: string) {
       const { pathname, params } = option;
       const route = (option.route = path.join(namespace, pathname));
       const sortableParams = params.sort((param1, param2) => param1.order - param2.order);
-      routes.set(route, (action: Action) => {
+      routes.set(route, (action) => {
         const finalParams = sortableParams.map((param) => {
           const { name } = param;
           switch (name) {

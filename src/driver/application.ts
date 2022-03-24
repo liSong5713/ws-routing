@@ -1,19 +1,17 @@
-import { Action } from './../metadatas/action';
+import { MessageMetadata } from './metadata/message';
 import { createServer } from 'http';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { EventEmitter } from 'events';
-import { routes } from '../routing/metadata';
 import Context from './context';
 
-export default class Application extends EventEmitter {
+export class Application extends EventEmitter {
   wsOptions?: ServerOptions;
+  wss: WebSocketServer;
   constructor(options?: ServerOptions) {
     super();
+    const self = this;
     this.wsOptions = options;
-  }
-  listen(port: number) {
-    const wss = new WebSocketServer(Object.assign(this.wsOptions || {}, { noServer: true }));
-    const server = createServer();
+    const wss = (this.wss = new WebSocketServer(Object.assign(this.wsOptions || {}, { noServer: true })));
     wss.on('headers', (...args) => {
       this.emit('headers', ...args);
     });
@@ -27,24 +25,24 @@ export default class Application extends EventEmitter {
       this.emit('connection', ws, request);
       const ctx = new Context(wss, ws, request);
       ws.on('message', function message(data, isBinary) {
-        try {
-          // TODO 可执行参数
-          const { route, message } = JSON.parse(data.toString());
-          const action: Action = {
-            ctx,
-            message,
-          };
-          routes.get(route)(action);
-        } catch (error) {
-          console.error(error);
-          // send error body
-        }
+        const { route, message } = JSON.parse(data.toString());
+        const messageObj = new MessageMetadata();
+        messageObj.ctx = ctx;
+        messageObj.route = route;
+        messageObj.message = message;
+        self.handlePerMessage(messageObj);
       });
     });
-
+  }
+  handlePerMessage(message: MessageMetadata) {
+    // overwrite by customize
+  }
+  listen(port: number) {
+    const that = this;
+    const server = createServer();
     server.on('upgrade', function upgrade(request, socket, head) {
-      wss.handleUpgrade(request, socket, head, function done(ws) {
-        wss.emit('connection', ws, request);
+      that.wss.handleUpgrade(request, socket, head, function done(ws) {
+        that.wss.emit('connection', ws, request);
       });
     });
     server.listen(port);
