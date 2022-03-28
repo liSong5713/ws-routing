@@ -22,14 +22,31 @@ class Example {
   }
   // Test: 参数位置乱序
   @Route('put')
-  putLogs(@Ctx() ctx, @Body() body) {
+  async putLogs(@Ctx() ctx: Context, @Body() body) {
     const message = this.creatMessage('logs/get', body);
-    ctx.send(message);
+    try {
+      const res = await ctx.send(message);
+      console.log(res)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  @Route('get')
+  getLogs(@Ctx() ctx: Context, @Body() body) {
+    // undefined null ''  true/false  plain text
+    ctx.send('');
+    ctx.send(false);
+    ctx.send(null);
+    ctx.send('hello');
+    ctx.send(Buffer.from('from buffer', 'utf-8'));
   }
   @Route('broadcast')
   broadcast(@Ctx() ctx, @Body() body) {
     const message = this.creatMessage('logs/broadcast', body);
-    ctx.broadcast(message);
+    const res = ctx.broadcast(message);
+    res.then((v) => {
+      console.log(v);
+    });
   }
 }
 

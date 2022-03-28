@@ -28,10 +28,20 @@ class RoutingTest {
     this.ws.send(JSON.stringify({ route: route, message: content }));
   }
   handlePerMessage(data) {
-    const { time,title,originalMessage,tip } = JSON.parse(data);
-    const div = document.createElement('div')
-    div.textContent = `time:${time}  | tile:${title} | originalMessage: ${originalMessage} | tip: ${tip}`
-    this.panel.appendChild(div);
+    try {
+      data = JSON.parse(data);
+      if (!data) {
+        throw new Error();
+      }
+      const { time, title, originalMessage, tip } = data;
+      const div = document.createElement('div');
+      div.textContent = `time:${time}  | tile:${title} | originalMessage: ${originalMessage} | tip: ${tip}`;
+      this.panel.appendChild(div);
+    } catch (error) {
+      const div = document.createElement('div');
+      div.textContent = data
+      this.panel.appendChild(div);
+    }
   }
 }
 

@@ -1,8 +1,18 @@
 import { IncomingMessage } from 'http';
-import { URL } from 'url';
 import WebSocket from 'ws';
-
+const userStorageSymbol = Symbol('user-storage');
 export default class Context {
+  // customize
+  private [userStorageSymbol] = new Map();
+  setData(key: string, value: any) {
+    this[userStorageSymbol].set(key, value);
+  }
+  getData(key: string) {
+    return this[userStorageSymbol].get(key);
+  }
+  getAllData() {
+    return Array.from(this[userStorageSymbol]);
+  }
   // === http ===
   constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {}
   get socket() {
@@ -41,7 +51,7 @@ export default class Context {
   get readyState() {
     return this.ws.readyState;
   }
-  send(data: any, cb?: (err?: Error) => void): void;
+  send(data: any): Promise<boolean | Error>;
   send(
     data: any,
     options: {
@@ -50,19 +60,52 @@ export default class Context {
       compress?: boolean | undefined;
       fin?: boolean | undefined;
     },
-    cb?: (err?: Error) => void,
-  ): void;
-  send(...args) {
-    // @ts-ignore
-    // TODO 对数据进行序列化
-    this.ws.send(...args);
+  );
+  send(...args): Promise<boolean | Error> {
+    return new Promise((resolve, reject) => {
+      if (!args.length) return reject(new Error(`message not be undefined`));
+      const callback = (err) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(true);
+      };
+      args.push(callback);
+      const dataType = typeof args[0];
+      if (dataType === 'string') {
+        // @ts-ignore
+        return this.ws.send(...args);
+      }
+      if (Buffer.isBuffer(args[0])) {
+        // @ts-ignore
+        return this.ws.send(...args);
+      }
+      if (args[0] !== undefined) {
+        args[0] = JSON.stringify(args[0]);
+        // @ts-ignore
+        return this.ws.send(...args);
+      }
+    });
   }
   // broadcast to all clients
   broadcast(data: any) {
-    // TODO test
-    if (!data) return;
-    for (const client of this.wss.clients) {
-      client.send(data);
+    try {
+      if (data === undefined) return Promise.allSettled([Promise.reject(new Error(`message not be undefined`))]);
+      if (typeof data !== 'string' && !Buffer.isBuffer(data)) {
+        data = JSON.stringify(data);
+      }
+      const sendMsgPromiseList = Array.from(this.wss.clients).map(
+        (client) =>
+          new Promise((resolve, reject) => {
+            client.send(data, (error) => {
+              if (error) return reject(error);
+              resolve(true);
+            });
+          }),
+      );
+      return Promise.allSettled(sendMsgPromiseList);
+    } catch (error) {
+      return Promise.allSettled([Promise.reject(error)]);
     }
   }
   close(code?: number, data?: string | Buffer) {
