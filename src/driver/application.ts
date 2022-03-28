@@ -13,7 +13,7 @@ export class Application extends EventEmitter {
     this.wsOptions = options;
     const wss = (this.wss = new WebSocketServer(Object.assign(this.wsOptions || {}, { noServer: true })));
     if (this.listenerCount('error')) {
-      this.on('error', () => {});
+      this.on('error', console.error);
     }
     wss.on('headers', (...args) => {
       this.emit('headers', ...args);

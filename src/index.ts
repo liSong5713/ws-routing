@@ -1,21 +1,32 @@
-import { NotFound } from './routing/error/NotFound';
-import { InternalServerError } from './routing/error/InternalServerError';
-import { ServerOptions } from 'ws';
 import { MessageMetadata } from './driver/metadata/message';
 import path from 'path';
 import { getMetadataStorage } from './routing/builder';
 import { ExecutorMetadata } from './routing/metadata/Executor';
+import { NotFound } from './routing/error/NotFound';
+import { InternalServerError } from './routing/error/InternalServerError';
+import { ServerOptions } from 'ws';
 
 // driver
 import { Application } from './driver/application';
+import { compose } from './routing/util/compose-middleware';
+
+
 // decorator
+export { Middleware } from './routing/decorator/Middleware';
 export { Controller } from './routing/decorator/Controller';
-export { Route } from './routing/decorator/Route';
+export { Route } from './routing/decorator/Route'
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
-
+// errors
+export { NotFound } from './routing/error/NotFound';
+export { InternalServerError } from './routing/error/InternalServerError';
+export { UnauthorizedError } from './routing/error/UnauthorizedError';
+// interface
+export { MiddlewareInterface } from './routing/interface/Middleware';
 export class WsRouting extends Application {
   routes: Map<string, ExecutorMetadata> = new Map();
+  beforeMiddleware: Function[] = [];
+  afterMiddleware: Function[] = [];
   constructor(options?: ServerOptions) {
     super(options);
     // TODO 加载文件目录
@@ -27,7 +38,20 @@ export class WsRouting extends Application {
     this.emit('error', error);
   }
   createExecutor() {
-    const { controllers: controllersStorage, actions: actionsStorage, params: paramsStorage } = getMetadataStorage();
+    const {
+      controllers: controllersStorage,
+      actions: actionsStorage,
+      params: paramsStorage,
+      beforeMiddleware: beforeMiddlewareStorage,
+      afterMiddleware: afterMiddlewareStorage,
+    } = getMetadataStorage();
+    this.beforeMiddleware = beforeMiddlewareStorage
+      .sort((p1, p2) => p1.order - p2.order)
+      .map((mw) => mw.ins.use.bind(mw.ins));
+    this.afterMiddleware = afterMiddlewareStorage
+      .sort((p1, p2) => p1.order - p2.order)
+      .map((mw) => mw.ins.use.bind(mw.ins));
+
     for (const action of actionsStorage) {
       const { pathname, target, id } = action;
       if (!controllersStorage.has(target)) {
@@ -48,21 +72,32 @@ export class WsRouting extends Application {
   }
   async handlePerMessage(messageObj: MessageMetadata) {
     const { route, message, ctx } = messageObj;
-    const executor = this.routes.get(route);
-    if (!executor) return this.emit('error', new NotFound(`${route} is not match`));
-    const { params, ins, methodname } = executor;
-    const finalParams = params.map(({ id }) => {
-      switch (id) {
-        case 'Body':
-          return message;
-        case 'Ctx':
-          return ctx;
-      }
-    });
-    try {
-      await ins[methodname](...finalParams);
-    } catch (error) {
-      this.emit('error', new InternalServerError(error as any));
+    const { routes, beforeMiddleware, afterMiddleware } = this;
+    let executorMiddleware;
+    const executor = routes.get(route);
+    if (!executor) {
+      executorMiddleware = (_, next) => {
+        this.emit('error', new NotFound(`${route} is not match`));
+        return next();
+      };
+    } else {
+      const { params, ins, methodname } = executor;
+      const finalParams = params.map(({ id }) => {
+        switch (id) {
+          case 'Body':
+            return message;
+          case 'Ctx':
+            return ctx;
+        }
+      });
+      executorMiddleware = async (_, next) => {
+        await ins[methodname](...finalParams);
+        return next();
+      };
     }
+    const middlewares = beforeMiddleware.concat(executorMiddleware).concat(afterMiddleware);
+    compose(middlewares)(ctx).catch((error) => {
+      this.emit('error', new InternalServerError(error));
+    });
   }
 }

@@ -1,9 +1,16 @@
+import { MiddlewareInterface } from './../../src/routing/interface/Middleware';
 import { log } from 'console';
 import 'reflect-metadata';
-import { WsRouting, Controller, Body, Ctx, Route } from '../../src';
+import { WsRouting, Controller, Body, Ctx, Route, Middleware } from '../../src';
 import Context from '../../src/driver/context';
 
-//  调用 /logs/insert => println 方法
+@Middleware({ type: 'before' })
+class BeforeMiddleTest implements MiddlewareInterface {
+  use(ctx: Context, next) {
+    console.log('before middleware process');
+    return next();
+  }
+}
 @Controller('logs')
 class Example {
   count = 1;
@@ -26,7 +33,7 @@ class Example {
     const message = this.creatMessage('logs/get', body);
     try {
       const res = await ctx.send(message);
-      console.log(res)
+      console.log(res);
     } catch (error) {
       console.log(error);
     }
@@ -50,5 +57,8 @@ class Example {
   }
 }
 
-const ws = new WsRouting();
-ws.listen(8080);
+const wr = new WsRouting();
+wr.on('error', (error) => {
+  console.error(error);
+});
+wr.listen(8080);
