@@ -1,7 +1,9 @@
 import { IncomingMessage } from 'http';
+import { EventEmitter } from 'events';
 import WebSocket from 'ws';
+
 const userStorageSymbol = Symbol('user-storage');
-export default class Context {
+export default class Context extends EventEmitter {
   // customize
   private [userStorageSymbol] = new Map();
   setData(key: string, value: any) {
@@ -14,7 +16,9 @@ export default class Context {
     return Array.from(this[userStorageSymbol]);
   }
   // === http ===
-  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {}
+  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {
+    super();
+  }
   get socket() {
     return this.req.socket;
   }
