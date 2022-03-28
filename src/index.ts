@@ -1,3 +1,5 @@
+import { NotFound } from './routing/error/NotFound';
+import { InternalServerError } from './routing/error/InternalServerError';
 import { ServerOptions } from 'ws';
 import { MessageMetadata } from './driver/metadata/message';
 import path from 'path';
@@ -21,6 +23,9 @@ export class WsRouting extends Application {
     this.createExecutor();
   }
   load() {}
+  onError(error) {
+    this.emit('error', error);
+  }
   createExecutor() {
     const { controllers: controllersStorage, actions: actionsStorage, params: paramsStorage } = getMetadataStorage();
     for (const action of actionsStorage) {
@@ -41,26 +46,23 @@ export class WsRouting extends Application {
       this.routes.set(executor.route, executor);
     }
   }
-  handlePerMessage(messageObj: MessageMetadata) {
+  async handlePerMessage(messageObj: MessageMetadata) {
     const { route, message, ctx } = messageObj;
     const executor = this.routes.get(route);
-    if (executor) {
-      const { params, ins, methodname } = executor;
-      const finalParams = params.map(({ id }) => {
-        switch (id) {
-          case 'Body':
-            return message;
-          case 'Ctx':
-            return ctx;
-        }
-      });
-      try {
-        ins[methodname](...finalParams);
-      } catch (error) {
-        //TODO Error 情况
+    if (!executor) return this.emit('error', new NotFound(`${route} is not match`));
+    const { params, ins, methodname } = executor;
+    const finalParams = params.map(({ id }) => {
+      switch (id) {
+        case 'Body':
+          return message;
+        case 'Ctx':
+          return ctx;
       }
+    });
+    try {
+      await ins[methodname](...finalParams);
+    } catch (error) {
+      this.emit('error', new InternalServerError(error as any));
     }
-
-    // TODO 404情况
   }
 }

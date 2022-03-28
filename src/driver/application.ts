@@ -12,8 +12,9 @@ export class Application extends EventEmitter {
     const self = this;
     this.wsOptions = options;
     const wss = (this.wss = new WebSocketServer(Object.assign(this.wsOptions || {}, { noServer: true })));
-    // 默认静默状态
-    this.on('error', () => {});
+    if (this.listenerCount('error')) {
+      this.on('error', () => {});
+    }
     wss.on('headers', (...args) => {
       this.emit('headers', ...args);
     });
