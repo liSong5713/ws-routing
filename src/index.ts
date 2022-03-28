@@ -1,7 +1,6 @@
 import { ServerOptions } from 'ws';
 import { MessageMetadata } from './driver/metadata/message';
 import path from 'path';
-import { ActionMetadata } from './routing/metadata/Action';
 import { getMetadataStorage } from './routing/builder';
 import { ExecutorMetadata } from './routing/metadata/Executor';
 
@@ -12,8 +11,6 @@ export { Controller } from './routing/decorator/Controller';
 export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
-
-// TODO load file
 
 export class WsRouting extends Application {
   routes: Map<string, ExecutorMetadata> = new Map();

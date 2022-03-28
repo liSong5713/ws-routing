@@ -54,6 +54,7 @@ export default class Context {
   ): void;
   send(...args) {
     // @ts-ignore
+    // TODO 对数据进行序列化
     this.ws.send(...args);
   }
   // broadcast to all clients
