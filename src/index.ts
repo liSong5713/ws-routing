@@ -1,3 +1,4 @@
+import { Container } from 'typedi';
 import { MessageMetadata } from './driver/metadata/message';
 import path from 'path';
 import { getMetadataStorage } from './routing/builder';
@@ -12,10 +13,14 @@ import { compose } from './routing/util/compose-middleware';
 
 // decorator
 export { Middleware } from './routing/decorator/Middleware';
+export { Service } from './routing/decorator/Service';
+export { Agent } from './routing/decorator/Agent';
+export { Inject } from './routing/decorator/Inject';
 export { Controller } from './routing/decorator/Controller';
 export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
+
 // errors
 export { NotFound } from './routing/error/NotFound';
 export { InternalServerError } from './routing/error/InternalServerError';
@@ -52,19 +57,19 @@ export class WsRouting extends Application {
       .map((mw) => mw.ins.use.bind(mw.ins));
 
     for (const action of actionsStorage) {
-      const { pathname, target, id } = action;
-      if (!controllersStorage.has(target)) {
+      const { pathname, target: _prototype, id } = action;
+      if (!controllersStorage.has(_prototype)) {
         continue;
       }
       const executor = new ExecutorMetadata();
-      const { namespace, ins } = controllersStorage.get(target)!;
-      const paramsOfTarget = paramsStorage.get(target) || [];
+      const { namespace, target: _constructor } = controllersStorage.get(_prototype)!;
+      const paramsOfTarget = paramsStorage.get(_prototype) || [];
       const paramsOfMethod = paramsOfTarget
         .filter((paramMetadata) => paramMetadata.methodname === id)
         .sort((p1, p2) => p1.order - p2.order);
       executor.route = path.join(namespace, pathname);
       executor.params = paramsOfMethod;
-      executor.ins = ins;
+      executor.ins = Container.get(_constructor); // lazy instantiation
       executor.methodname = id;
       this.routes.set(executor.route, executor);
     }
