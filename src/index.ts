@@ -13,12 +13,14 @@ import { compose } from './routing/util/compose-middleware';
 
 // decorator
 export { Middleware } from './routing/decorator/Middleware';
+export { Service } from './routing/decorator/Service';
+export { Agent } from './routing/decorator/Agent';
+export { Inject } from './routing/decorator/Inject';
 export { Controller } from './routing/decorator/Controller';
 export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
-export { Service } from './routing/decorator/Service';
-export { Inject } from './routing/decorator/Inject';
+
 // errors
 export { NotFound } from './routing/error/NotFound';
 export { InternalServerError } from './routing/error/InternalServerError';

@@ -1,11 +1,21 @@
 import { MiddlewareInterface } from '../../src/routing/interface/Middleware';
 import 'reflect-metadata';
-import { WsRouting, Controller, Body, Ctx, Route, Middleware, Service, Inject } from '../../src';
+import { WsRouting, Controller, Body, Ctx, Route, Middleware, Service, Inject, Agent } from '../../src';
 import Context from '../../src/driver/context';
+
+@Agent()
+class MyAgent {
+  doAgentThing() {
+    console.log('do agent thing~');
+  }
+}
 
 @Service()
 class MyService {
+  @Inject()
+  myAgent: MyAgent;
   doSomething() {
+    this.myAgent.doAgentThing();
     console.log('service do something~');
   }
 }
