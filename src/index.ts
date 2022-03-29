@@ -10,11 +10,10 @@ import { ServerOptions } from 'ws';
 import { Application } from './driver/application';
 import { compose } from './routing/util/compose-middleware';
 
-
 // decorator
 export { Middleware } from './routing/decorator/Middleware';
 export { Controller } from './routing/decorator/Controller';
-export { Route } from './routing/decorator/Route'
+export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
 // errors
@@ -96,7 +95,8 @@ export class WsRouting extends Application {
       };
     }
     const middlewares = beforeMiddleware.concat(executorMiddleware).concat(afterMiddleware);
-    compose(middlewares)(ctx).catch((error) => {
+    const fnChain = compose(middlewares);
+    fnChain(ctx).catch((error) => {
       this.emit('error', new InternalServerError(error));
     });
   }
