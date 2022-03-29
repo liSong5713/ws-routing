@@ -1,7 +1,7 @@
 import { ControllerMetadata } from './../metadata/Controller';
 import { getMetadataStorage } from '../builder';
-
-// class decorator
+import { Service } from 'typedi';
+// Controller Layer
 export function Controller(namespace: string) {
   return function (target) {
     const { controllers } = getMetadataStorage();
@@ -12,9 +12,10 @@ export function Controller(namespace: string) {
       }
     }
     const metadata = new ControllerMetadata();
-    metadata.ins = new target();
-    metadata.target = target.prototype;
+    metadata.target = target;
     metadata.namespace = namespace;
-    controllers.set(metadata.target, metadata);
+    controllers.set(target.prototype, metadata);
+    // typedi serve single instance
+    Service()(target);
   };
 }
