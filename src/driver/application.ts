@@ -1,19 +1,25 @@
-import { createServer } from 'http';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { EventEmitter } from 'events';
-import Context from './context';
+import { Context } from './context';
 
 export class Application extends EventEmitter {
-  wsOptions?: ServerOptions;
   wss: WebSocketServer;
   constructor(options?: ServerOptions) {
     super();
+    const { noServer, server } = options || {};
     const self = this;
-    this.wsOptions = options;
-    const wss = (this.wss = new WebSocketServer(Object.assign(this.wsOptions || {}, { noServer: true })));
+    const wss = (this.wss = new WebSocketServer(options));
     if (this.listenerCount('error')) {
       this.on('error', console.error);
     }
+    if (noServer && server) {
+      server.on('upgrade', function upgrade(request, socket, head) {
+        self.wss.handleUpgrade(request, socket, head, function done(ws) {
+          self.wss.emit('connection', ws, request);
+        });
+      });
+    }
+
     wss.on('headers', (...args) => {
       this.emit('headers', ...args);
     });
@@ -36,15 +42,5 @@ export class Application extends EventEmitter {
   }
   handlePerMessage(ctx: Context) {
     // overwrite by customize
-  }
-  listen(port: number) {
-    const that = this;
-    const server = createServer();
-    server.on('upgrade', function upgrade(request, socket, head) {
-      that.wss.handleUpgrade(request, socket, head, function done(ws) {
-        that.wss.emit('connection', ws, request);
-      });
-    });
-    server.listen(port);
   }
 }

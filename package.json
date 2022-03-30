@@ -22,6 +22,7 @@
     "registry": "http://nexus.17usoft.com/repository/npm-fe/"
   },
   "dependencies": {
+    "glob": "^7.2.0",
     "reflect-metadata": "^0.1.13",
     "typedi": "^0.10.0",
     "ws": "^8.5.0"

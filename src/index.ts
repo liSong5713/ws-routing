@@ -1,15 +1,18 @@
 import 'reflect-metadata';
 import path from 'path';
+import glob from 'glob';
 import { Container } from 'typedi';
 import { getMetadataStorage } from './routing/builder';
 import { ExecutorMetadata } from './routing/metadata/Executor';
 import { NotFound } from './routing/error/NotFound';
 import { InternalServerError } from './routing/error/InternalServerError';
-import { ServerOptions } from 'ws';
+import { RoutingOptions } from './routing/metadata/types/RoutingOptions';
 import { compose } from './routing/util/compose-middleware';
 import { Application } from './driver/application';
-import Context from './driver/context';
+import { Context } from './driver/context';
 
+export { RoutingOptions } from './routing/metadata/types/RoutingOptions';
+export { Context } from './driver/context';
 // decorator
 export { Middleware } from './routing/decorator/Middleware';
 export { Service } from './routing/decorator/Service';
@@ -25,24 +28,36 @@ export { NotFound } from './routing/error/NotFound';
 export { InternalServerError } from './routing/error/InternalServerError';
 export { UnauthorizedError } from './routing/error/UnauthorizedError';
 // interface
-export { MiddlewareInterface } from './routing/interface/Middleware';
+export { MiddlewareInterface } from './routing/metadata/interface/MiddlewareInterface';
 
 const MDSymbol = Symbol('__middleware_dispatcher__');
 export class WsRouting extends Application {
   private [MDSymbol]: Function;
-  constructor(options?: ServerOptions) {
-    super(options);
-    // TODO 加载文件目录
+  constructor(public options?: RoutingOptions) {
+    super(options?.ws);
+    this.loadClassesFromDirectory(); // load Middleware Controller Service Agent
     this.registerRoutes();
     const [beforeMiddleware, afterMiddleware] = this.sortMiddleware();
     const routeMiddleware = this.getRouteMiddleware();
     this[MDSymbol] = this.composeMiddleware(beforeMiddleware, routeMiddleware, afterMiddleware);
   }
-  load() {}
-
-  onError(error) {
-    this.emit('error', error);
+  loadClassesFromDirectory() {
+    const pattern = '/**/*.{ts,js}';
+    const { controller = './controller', middleware = './middleware' } = this.options || {};
+    const noTypeFiles = (filename) => !/\.d\.ts$/.test(filename);
+    const loadFile = (dirs) => {
+      if (!dirs || !dirs?.length) return;
+      if (!Array.isArray(dirs)) {
+        dirs = [dirs];
+      }
+      dirs.map((dir) => {
+        const targetFilenames = glob.sync(dir + pattern).filter(noTypeFiles);
+        targetFilenames.map((filename) => require(filename));
+      });
+    };
+    [controller, middleware].map(loadFile);
   }
+
   sortMiddleware() {
     const { beforeMiddleware: beforeMiddlewareStorage, afterMiddleware: afterMiddlewareStorage } = getMetadataStorage();
     const beforeMiddleware = beforeMiddlewareStorage

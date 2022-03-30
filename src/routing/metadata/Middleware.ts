@@ -1,4 +1,4 @@
-import { MiddlewareInterface } from './../interface/Middleware';
+import { MiddlewareInterface } from './interface/MiddlewareInterface';
 export class MiddlewareMeta {
   type = 'middleware';
   target: object;
