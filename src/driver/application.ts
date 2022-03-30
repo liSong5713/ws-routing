@@ -1,4 +1,3 @@
-import { MessageMetadata } from './metadata/message';
 import { createServer } from 'http';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { EventEmitter } from 'events';
@@ -26,18 +25,16 @@ export class Application extends EventEmitter {
     });
     wss.on('connection', (ws, request) => {
       this.emit('connection', ws, request);
-      const ctx = new Context(wss, ws, request);
       ws.on('message', function message(data, isBinary) {
         const { route, message } = JSON.parse(data.toString());
-        const messageObj = new MessageMetadata();
-        messageObj.ctx = ctx;
-        messageObj.route = route;
-        messageObj.message = message;
-        self.handlePerMessage(messageObj);
+        const ctx = new Context(wss, ws, request);
+        ctx.body = message;
+        ctx.route = route;
+        self.handlePerMessage(ctx);
       });
     });
   }
-  handlePerMessage(message: MessageMetadata) {
+  handlePerMessage(ctx: Context) {
     // overwrite by customize
   }
   listen(port: number) {

@@ -1,6 +1,5 @@
-import { Container } from 'typedi';
-import { MessageMetadata } from './driver/metadata/message';
 import path from 'path';
+import { Container } from 'typedi';
 import { getMetadataStorage } from './routing/builder';
 import { ExecutorMetadata } from './routing/metadata/Executor';
 import { NotFound } from './routing/error/NotFound';
@@ -10,6 +9,7 @@ import { ServerOptions } from 'ws';
 // driver
 import { Application } from './driver/application';
 import { compose } from './routing/util/compose-middleware';
+import Context from './driver/context';
 
 // decorator
 export { Middleware } from './routing/decorator/Middleware';
@@ -27,35 +27,40 @@ export { InternalServerError } from './routing/error/InternalServerError';
 export { UnauthorizedError } from './routing/error/UnauthorizedError';
 // interface
 export { MiddlewareInterface } from './routing/interface/Middleware';
+
+const MDSymbol = Symbol('_middleware_dispatcher__');
 export class WsRouting extends Application {
-  routes: Map<string, ExecutorMetadata> = new Map();
-  beforeMiddleware: Function[] = [];
-  afterMiddleware: Function[] = [];
+  private [MDSymbol]: Function;
   constructor(options?: ServerOptions) {
     super(options);
     // TODO 加载文件目录
-    this.load();
-    this.createExecutor();
+    this.registerRoutes();
+    const [beforeMiddleware, afterMiddleware] = this.sortMiddleware();
+    const routeMiddleware = this.getRouteMiddleware();
+    this[MDSymbol] = this.composeMiddleware(beforeMiddleware, routeMiddleware, afterMiddleware);
   }
   load() {}
+
   onError(error) {
     this.emit('error', error);
   }
-  createExecutor() {
+  sortMiddleware() {
+    const { beforeMiddleware: beforeMiddlewareStorage, afterMiddleware: afterMiddlewareStorage } = getMetadataStorage();
+    const beforeMiddleware = beforeMiddlewareStorage
+      .sort((p1, p2) => p1.order - p2.order)
+      .map((mw) => mw.ins.use.bind(mw.ins));
+    const afterMiddleware = afterMiddlewareStorage
+      .sort((p1, p2) => p1.order - p2.order)
+      .map((mw) => mw.ins.use.bind(mw.ins));
+    return [beforeMiddleware, afterMiddleware];
+  }
+  registerRoutes() {
     const {
       controllers: controllersStorage,
       actions: actionsStorage,
       params: paramsStorage,
-      beforeMiddleware: beforeMiddlewareStorage,
-      afterMiddleware: afterMiddlewareStorage,
+      routes: routesStorage,
     } = getMetadataStorage();
-    this.beforeMiddleware = beforeMiddlewareStorage
-      .sort((p1, p2) => p1.order - p2.order)
-      .map((mw) => mw.ins.use.bind(mw.ins));
-    this.afterMiddleware = afterMiddlewareStorage
-      .sort((p1, p2) => p1.order - p2.order)
-      .map((mw) => mw.ins.use.bind(mw.ins));
-
     for (const action of actionsStorage) {
       const { pathname, target: _prototype, id } = action;
       if (!controllersStorage.has(_prototype)) {
@@ -71,37 +76,38 @@ export class WsRouting extends Application {
       executor.params = paramsOfMethod;
       executor.ins = Container.get(_constructor); // lazy instantiation
       executor.methodname = id;
-      this.routes.set(executor.route, executor);
+      // register routes
+      routesStorage.set(executor.route, executor);
     }
   }
-  async handlePerMessage(messageObj: MessageMetadata) {
-    const { route, message, ctx } = messageObj;
-    const { routes, beforeMiddleware, afterMiddleware } = this;
-    let executorMiddleware;
-    const executor = routes.get(route);
-    if (!executor) {
-      executorMiddleware = (_, next) => {
+  composeMiddleware(beforeMiddleware: Function[], routeMiddleware: Function, afterMiddleware: Function[]) {
+    const middlewareList = beforeMiddleware.concat(routeMiddleware).concat(afterMiddleware);
+    return compose(middlewareList);
+  }
+  getRouteMiddleware() {
+    const { routes } = getMetadataStorage();
+    return async (ctx, next) => {
+      const { route, body } = ctx;
+      if (!routes.has(route)) {
         this.emit('error', new NotFound(`${route} is not match`));
         return next();
-      };
-    } else {
-      const { params, ins, methodname } = executor;
+      }
+      const { params, ins, methodname } = routes.get(route)!;
       const finalParams = params.map(({ id }) => {
         switch (id) {
           case 'Body':
-            return message;
+            return body;
           case 'Ctx':
             return ctx;
         }
       });
-      executorMiddleware = async (_, next) => {
-        await ins[methodname](...finalParams);
-        return next();
-      };
-    }
-    const middlewares = beforeMiddleware.concat(executorMiddleware).concat(afterMiddleware);
-    const fnChain = compose(middlewares);
-    fnChain(ctx).catch((error) => {
+      await ins[methodname](...finalParams);
+      return next();
+    };
+  }
+  // overwrite per message handle
+  async handlePerMessage(ctx: Context) {
+    this[MDSymbol](ctx).catch((error) => {
       this.emit('error', new InternalServerError(error));
     });
   }

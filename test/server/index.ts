@@ -20,7 +20,7 @@ class MyService {
   }
 }
 
-@Middleware({ type: 'before' })
+@Middleware({ type: 'before', order: 3 })
 class BeforeMiddleTest implements MiddlewareInterface {
   use(ctx: Context, next) {
     console.log('before middleware 1 process');
@@ -82,7 +82,7 @@ class ExampleController {
     ctx.send(Buffer.from('from buffer', 'utf-8'));
   }
   @Route('broadcast')
-  broadcast(@Ctx() ctx, @Body() body) {
+  broadcast(@Ctx() ctx: Context, @Body() body) {
     const message = this.creatMessage('logs/broadcast', body);
     const res = ctx.broadcast(message);
     res.then((v) => {

@@ -1,11 +1,16 @@
+import { MessageMetadata } from './metadata/message';
 import { IncomingMessage } from 'http';
 import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 
 const userStorageSymbol = Symbol('user-storage');
 export default class Context extends EventEmitter {
-  // customize
+  route: string; //per message route
+
+  body: any; //per message body
+
   private [userStorageSymbol] = new Map();
+
   setData(key: string, value: any) {
     this[userStorageSymbol].set(key, value);
   }
@@ -22,6 +27,7 @@ export default class Context extends EventEmitter {
   get socket() {
     return this.req.socket;
   }
+  // request.url
   get path() {
     return this.req.url;
   }
@@ -92,7 +98,7 @@ export default class Context extends EventEmitter {
     });
   }
   // broadcast to all clients
-  broadcast(data: any) {
+  broadcast(data: any): Promise<PromiseSettledResult<boolean>[]> {
     try {
       if (data === undefined) return Promise.allSettled([Promise.reject(new Error(`message not be undefined`))]);
       if (typeof data !== 'string' && !Buffer.isBuffer(data)) {
@@ -107,7 +113,7 @@ export default class Context extends EventEmitter {
             });
           }),
       );
-      return Promise.allSettled(sendMsgPromiseList);
+      return Promise.allSettled(sendMsgPromiseList) as any;
     } catch (error) {
       return Promise.allSettled([Promise.reject(error)]);
     }
