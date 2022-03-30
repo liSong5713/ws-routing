@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import path from 'path';
 import { Container } from 'typedi';
 import { getMetadataStorage } from './routing/builder';
@@ -5,10 +6,8 @@ import { ExecutorMetadata } from './routing/metadata/Executor';
 import { NotFound } from './routing/error/NotFound';
 import { InternalServerError } from './routing/error/InternalServerError';
 import { ServerOptions } from 'ws';
-
-// driver
-import { Application } from './driver/application';
 import { compose } from './routing/util/compose-middleware';
+import { Application } from './driver/application';
 import Context from './driver/context';
 
 // decorator
@@ -28,7 +27,7 @@ export { UnauthorizedError } from './routing/error/UnauthorizedError';
 // interface
 export { MiddlewareInterface } from './routing/interface/Middleware';
 
-const MDSymbol = Symbol('_middleware_dispatcher__');
+const MDSymbol = Symbol('__middleware_dispatcher__');
 export class WsRouting extends Application {
   private [MDSymbol]: Function;
   constructor(options?: ServerOptions) {

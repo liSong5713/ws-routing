@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Compose `middleware` returning
  * a fully valid middleware comprised
@@ -9,13 +11,18 @@
  */
 
 export function compose(middleware) {
+  if (!Array.isArray(middleware)) throw new TypeError('Middleware stack must be an array!');
+  for (const fn of middleware) {
+    if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!');
+  }
+
   /**
    * @param {Object} context
    * @return {Promise}
    * @api public
    */
 
-  return function (context, next?) {
+  return function (context, next) {
     // last called middleware #
     let index = -1;
     return dispatch(0);

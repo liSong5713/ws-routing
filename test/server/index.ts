@@ -1,5 +1,4 @@
 import { MiddlewareInterface } from '../../src/routing/interface/Middleware';
-import 'reflect-metadata';
 import { WsRouting, Controller, Body, Ctx, Route, Middleware, Service, Inject, Agent } from '../../src';
 import Context from '../../src/driver/context';
 
@@ -41,7 +40,11 @@ class AfterMiddleTest implements MiddlewareInterface {
     return next();
   }
 }
-
+function sleep(time) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
+}
 @Controller('logs')
 class ExampleController {
   @Inject()
@@ -56,8 +59,9 @@ class ExampleController {
     });
   }
   @Route('insert')
-  insertLogs(@Body() body, @Ctx() ctx: Context) {
+  async insertLogs(@Body() body, @Ctx() ctx: Context) {
     const message = this.creatMessage('logs/insert', body);
+    await sleep(30000);
     this.myService.doSomething();
     ctx.send(message);
   }

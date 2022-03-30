@@ -1,9 +1,8 @@
-import { MessageMetadata } from './metadata/message';
 import { IncomingMessage } from 'http';
 import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 
-const userStorageSymbol = Symbol('user-storage');
+const userStorageSymbol = Symbol('__user_storage__');
 export default class Context extends EventEmitter {
   route: string; //per message route
 
