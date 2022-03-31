@@ -4,9 +4,13 @@ import WebSocket from 'ws';
 
 const userStorageSymbol = Symbol('__user_storage__');
 export class Context extends EventEmitter {
-  route: string; //per message route
+  status: number = 404;
 
-  body: any; //per message body
+  //per message route
+  route: string;
+
+  //per message body
+  body: any;
 
   private [userStorageSymbol] = new Map();
 

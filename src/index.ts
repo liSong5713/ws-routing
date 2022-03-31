@@ -103,7 +103,7 @@ export class WsRouting extends Application {
     return async (ctx, next) => {
       const { route, body } = ctx;
       if (!routes.has(route)) {
-        this.emit('error', new NotFound(`${route} is not match`));
+        // this.emit('error', new NotFound(`not match ${route}`));
         return next();
       }
       const { params, ins, methodname } = routes.get(route)!;
@@ -115,7 +115,13 @@ export class WsRouting extends Application {
             return ctx;
         }
       });
-      await ins[methodname](...finalParams);
+      try {
+        await ins[methodname](...finalParams);
+        ctx.status = 200;
+      } catch (error) {
+        ctx.status = 500;
+        throw error;
+      }
       return next();
     };
   }

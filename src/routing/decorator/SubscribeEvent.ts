@@ -11,7 +11,7 @@ export function SubscribeEvent(eventName: EventName) {
     em.id = key;
     em.eventName = eventName;
     events.push(em);
-    collect()();
+    collect()(target.constructor);
     return descriptor;
   };
 }

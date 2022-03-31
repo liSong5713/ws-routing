@@ -19,28 +19,32 @@ export class Application extends EventEmitter {
         });
       });
     }
-
-    wss.on('headers', (...args) => {
-      this.emit('headers', ...args);
-    });
-    wss.on('error', (error) => {
-      this.emit('error', error);
-    });
-    wss.on('close', () => {
-      this.emit('close');
-    });
+    const proxyFn = function proxyFn(eventName) {
+      return function (...args) {
+        self.emit(eventName, ...args);
+      };
+    };
+    wss.on('ping', proxyFn('ping'));
+    wss.on('error', proxyFn('error'));
+    wss.on('close', proxyFn('close'));
     wss.on('connection', (ws, request) => {
       this.emit('connection', ws, request);
       ws.on('message', function message(data, isBinary) {
-        const { route, message } = JSON.parse(data.toString());
         const ctx = new Context(wss, ws, request);
-        ctx.body = message;
-        ctx.route = route;
+        const originMessage = data.toString();
+        try {
+          const { route, message } = JSON.parse(originMessage);
+          ctx.body = message;
+          ctx.route = route;
+        } catch (error) {
+          // Non-standard message
+          ctx.body = originMessage;
+        }
         self.handlePerMessage(ctx);
       });
     });
   }
   handlePerMessage(ctx: Context) {
-    // overwrite by customize
+    // override by routing
   }
 }
