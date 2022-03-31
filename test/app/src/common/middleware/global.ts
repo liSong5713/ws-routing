@@ -1,4 +1,4 @@
-import { Middleware, Context, MiddlewareInterface } from '../../../../src';
+import { Middleware, Context, MiddlewareInterface } from '../../../../../src';
 
 @Middleware({ type: 'before', order: 3 })
 class BeforeMiddleTest implements MiddlewareInterface {

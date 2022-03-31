@@ -1,4 +1,4 @@
-import { MiddlewareMeta } from './../metadata/Middleware';
+import { MiddlewareMetadata } from './../metadata/Middleware';
 import { getMetadataStorage } from '../builder';
 
 export function Middleware(options: { type: 'before' | 'after'; order?: number }) {
@@ -8,7 +8,7 @@ export function Middleware(options: { type: 'before' | 'after'; order?: number }
       throw new Error(`${target.name} not implement ${target.name}.prototype.use`);
     }
     const { order, type } = options;
-    const mm = new MiddlewareMeta();
+    const mm = new MiddlewareMetadata();
     mm.type = type;
     mm.order = order || 0;
     mm.target = target;

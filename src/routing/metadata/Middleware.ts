@@ -1,5 +1,5 @@
 import { MiddlewareInterface } from './interface/MiddlewareInterface';
-export class MiddlewareMeta {
+export class MiddlewareMetadata {
   type = 'middleware';
   target: object;
   order: number;

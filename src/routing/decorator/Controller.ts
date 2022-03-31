@@ -1,6 +1,6 @@
 import { ControllerMetadata } from './../metadata/Controller';
 import { getMetadataStorage } from '../builder';
-import { Service } from 'typedi';
+import { Service as collect } from 'typedi';
 // Controller Layer
 export function Controller(namespace: string) {
   return function (target) {
@@ -16,6 +16,6 @@ export function Controller(namespace: string) {
     metadata.namespace = namespace;
     controllers.set(target.prototype, metadata);
     // typedi serve single instance
-    Service()(target);
+    collect()(target);
   };
 }

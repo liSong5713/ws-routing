@@ -43,7 +43,7 @@ export class WsRouting extends Application {
   }
   loadClassesFromDirectory() {
     const pattern = '/**/*.{ts,js}';
-    const { controller = './controller', middleware = './middleware' } = this.options || {};
+    const { controller = './controller', common = './common' } = this.options || {};
     const noTypeFiles = (filename) => !/\.d\.ts$/.test(filename);
     const loadFile = (dirs) => {
       if (!dirs || !dirs?.length) return;
@@ -52,10 +52,10 @@ export class WsRouting extends Application {
       }
       dirs.map((dir) => {
         const targetFilenames = glob.sync(dir + pattern).filter(noTypeFiles);
-        targetFilenames.map((filename) => require(filename));
+        targetFilenames.map((filename) => require(path.normalize(filename)));
       });
     };
-    [controller, middleware].map(loadFile);
+    [common, controller].map(loadFile);
   }
 
   sortMiddleware() {

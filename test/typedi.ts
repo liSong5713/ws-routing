@@ -21,6 +21,8 @@ class ExampleClass {
 
   withoutDecorator: InjectedExampleClass;
 }
+Service()(ExampleClass);
+Service()(ExampleClass);
 
 const instance = Container.get(ExampleClass);
 const instance2 = Container.get(ExampleClass);
