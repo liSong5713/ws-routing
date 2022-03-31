@@ -1,7 +1,8 @@
 import { Service as collect } from 'typedi';
 import { getMetadataStorage } from '../builder';
 import { EventMetadata } from './../metadata/Event';
-type EventName = 'error' | 'connection' | 'close' | 'upgrade' | 'open' | 'message' | 'ping';
+
+type EventName = 'error' | 'connection' | 'close' | 'open' | 'ping';
 
 export function SubscribeEvent(eventName: EventName) {
   return function (target, key, descriptor) {

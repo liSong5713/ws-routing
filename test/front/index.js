@@ -11,7 +11,7 @@ class RoutingTest {
     };
   }
   createWsConnection() {
-    this.ws = new WebSocket('ws://localhost:8080/usr/test');
+    window.wsc = this.ws = new WebSocket('ws://localhost:8080/usr/test');
     this.ws.addEventListener('message', (event) => {
       this.handlePerMessage(event.data);
     });
@@ -39,7 +39,7 @@ class RoutingTest {
       this.panel.appendChild(div);
     } catch (error) {
       const div = document.createElement('div');
-      div.textContent = data
+      div.textContent = data;
       this.panel.appendChild(div);
     }
   }

@@ -19,16 +19,7 @@ export class Application extends EventEmitter {
         });
       });
     }
-    const proxyFn = function proxyFn(eventName) {
-      return function (...args) {
-        self.emit(eventName, ...args);
-      };
-    };
-    wss.on('ping', proxyFn('ping'));
-    wss.on('error', proxyFn('error'));
-    wss.on('close', proxyFn('close'));
     wss.on('connection', (ws, request) => {
-      this.emit('connection', ws, request);
       ws.on('message', function message(data, isBinary) {
         const ctx = new Context(wss, ws, request);
         const originMessage = data.toString();

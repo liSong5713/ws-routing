@@ -22,6 +22,7 @@ export { Controller } from './routing/decorator/Controller';
 export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
+export { SubscribeEvent } from './routing/decorator/SubscribeEvent';
 
 // errors
 export { NotFound } from './routing/error/NotFound';
@@ -36,6 +37,7 @@ export class WsRouting extends Application {
   constructor(public options?: RoutingOptions) {
     super(options?.ws);
     this.loadClassesFromDirectory(); // load Middleware Controller Service Agent
+    this.attachEvents();
     this.registerRoutes();
     const [beforeMiddleware, afterMiddleware] = this.sortMiddleware();
     const routeMiddleware = this.getRouteMiddleware();
@@ -93,6 +95,34 @@ export class WsRouting extends Application {
       // register routes
       routesStorage.set(executor.route, executor);
     }
+  }
+  attachEvents() {
+    const { events: eventStorage } = getMetadataStorage();
+    const eventMap: Map<string, Function[]> = new Map();
+    for (const eventMetadata of eventStorage) {
+      const { eventName, target, id: methodname } = eventMetadata;
+      const executor = (...args) => {
+        (Container.get(target.constructor) as any)[methodname](...args);
+      };
+      if (!eventMap.has(eventName)) {
+        eventMap.set(eventName, [executor]);
+        continue;
+      }
+      const executorList = eventMap.get(eventName)!;
+      executorList.push(executor);
+    }
+    const proxyFn = function (eventName: string) {
+      return (...args) => {
+        const executorList = eventMap.get(eventName);
+        executorList?.forEach((fn) => fn(...args));
+      };
+    };
+    this.on('error', proxyFn('error'));
+    this.wss.on('open', proxyFn('open'));
+    this.wss.on('connection', proxyFn('connection'));
+    this.wss.on('ping', proxyFn('ping'));
+    this.wss.on('error', proxyFn('error'));
+    this.wss.on('close', proxyFn('close'));
   }
   composeMiddleware(beforeMiddleware: Function[], routeMiddleware: Function, afterMiddleware: Function[]) {
     const middlewareList = beforeMiddleware.concat(routeMiddleware).concat(afterMiddleware);
