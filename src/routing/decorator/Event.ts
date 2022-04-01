@@ -1,10 +1,9 @@
-import { Service as collect } from 'typedi';
+import { DefaultEvents, WSSEvents, WSEvents } from '../metadata/types/Events';
 import { getMetadataStorage } from '../builder';
-import { EventMetadata } from './../metadata/Event';
+import { EventMetadata } from '../metadata/Event';
 
-type EventName = 'error' | 'connection' | 'close' | 'open' | 'ping';
-
-export function SubscribeEvent(eventName: EventName) {
+// register event class method
+export function Event(eventName: DefaultEvents | WSSEvents | WSEvents) {
   return function (target, key, descriptor) {
     const { events } = getMetadataStorage();
     const em = new EventMetadata();
@@ -12,7 +11,6 @@ export function SubscribeEvent(eventName: EventName) {
     em.id = key;
     em.eventName = eventName;
     events.push(em);
-    collect()(target.constructor);
     return descriptor;
   };
 }

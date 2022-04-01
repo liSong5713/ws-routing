@@ -20,6 +20,15 @@ export class Application extends EventEmitter {
       });
     }
     wss.on('connection', (ws, request) => {
+      ws.on('close', (...args) => {
+        self.emit('ws:close', wss, ws, ...args);
+      });
+      ws.on('error', (...args) => {
+        self.emit('ws:error', wss, ws, ...args);
+      });
+      ws.on('unexpected-response', (...args) => {
+        self.emit('ws:unexpected-response', wss, ws, ...args);
+      });
       ws.on('message', function message(data, isBinary) {
         const ctx = new Context(wss, ws, request);
         const originMessage = data.toString();

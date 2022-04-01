@@ -22,7 +22,8 @@ export { Controller } from './routing/decorator/Controller';
 export { Route } from './routing/decorator/Route';
 export { Body } from './routing/decorator/Body';
 export { Ctx } from './routing/decorator/Ctx';
-export { SubscribeEvent } from './routing/decorator/SubscribeEvent';
+export { Subscribe } from './routing/decorator/Subscribe';
+export { Event } from './routing/decorator/Event';
 
 // errors
 export { NotFound } from './routing/error/NotFound';
@@ -102,7 +103,8 @@ export class WsRouting extends Application {
     for (const eventMetadata of eventStorage) {
       const { eventName, target, id: methodname } = eventMetadata;
       const executor = (...args) => {
-        (Container.get(target.constructor) as any)[methodname](...args);
+        //@ts-ignore
+        Container.get(target.constructor)[methodname](...args);
       };
       if (!eventMap.has(eventName)) {
         eventMap.set(eventName, [executor]);
@@ -118,11 +120,16 @@ export class WsRouting extends Application {
       };
     };
     this.on('error', proxyFn('error'));
+    // server
     this.wss.on('open', proxyFn('open'));
     this.wss.on('connection', proxyFn('connection'));
     this.wss.on('ping', proxyFn('ping'));
     this.wss.on('error', proxyFn('error'));
-    this.wss.on('close', proxyFn('close'));
+    this.wss.on('wss:close', proxyFn('close'));
+    // socket
+    this.on('ws:close', proxyFn('ws:close'));
+    this.on('ws:error', proxyFn('ws:error'));
+    this.on('ws:unexpected-response', proxyFn('ws:unexpected-response'));
   }
   composeMiddleware(beforeMiddleware: Function[], routeMiddleware: Function, afterMiddleware: Function[]) {
     const middlewareList = beforeMiddleware.concat(routeMiddleware).concat(afterMiddleware);
