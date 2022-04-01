@@ -10,10 +10,6 @@ export class SubscribeCenter {
   handleWssConnection(...args) {
     console.log('wss:connection1');
   }
-  @Event('wss:connection')
-  handleWss2Connection(...args) {
-    console.log('connection2');
-  }
   @Event('ws:close')
   handleWSClose(...args) {
     console.log('ws:close');
@@ -21,5 +17,18 @@ export class SubscribeCenter {
   @Event('ws:error')
   handleWSError(...args) {
     console.log('ws:error');
+  }
+}
+
+@Subscribe()
+export class SubscribeCenter2 {
+  @Event('wss:connection')
+  handleWssConnection() {
+    console.log('wss:connection2');
+  }
+
+  @Event('ws:close')
+  handleWSclose() {
+    console.log('ws:close2');
   }
 }

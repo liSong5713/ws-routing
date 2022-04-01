@@ -4,7 +4,6 @@ import glob from 'glob';
 import { Container } from 'typedi';
 import { getMetadataStorage } from './routing/builder';
 import { ExecutorMetadata } from './routing/metadata/Executor';
-import { NotFound } from './routing/error/NotFound';
 import { InternalServerError } from './routing/error/InternalServerError';
 import { RoutingOptions } from './routing/metadata/types/RoutingOptions';
 import { compose } from './routing/util/compose-middleware';
@@ -103,7 +102,7 @@ export class WsRouting extends Application {
     for (const eventMetadata of eventStorage) {
       const { eventName, target, id: methodname } = eventMetadata;
       const executor = (...args) => {
-        //@ts-ignore
+        // @ts-ignore
         Container.get(target.constructor)[methodname](...args);
       };
       if (!eventMap.has(eventName)) {
@@ -120,11 +119,11 @@ export class WsRouting extends Application {
       };
     };
     this.on('error', proxyFn('error'));
-    // server
+    // ws server
     this.wss.on('connection', proxyFn('wss:connection'));
     this.wss.on('error', proxyFn('error'));
     this.wss.on('wss:close', proxyFn('wss:close'));
-    // socket
+    // ws socket
     this.on('ws:close', proxyFn('ws:close'));
     this.on('ws:error', proxyFn('ws:error'));
     this.on('ws:unexpected-response', proxyFn('ws:unexpected-response'));

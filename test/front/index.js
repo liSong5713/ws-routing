@@ -30,7 +30,7 @@ class RoutingTest {
   handlePerMessage(data) {
     try {
       data = JSON.parse(data);
-      if (!data) {
+      if (Object.prototype.toString.call(data) !== '[object Object]') {
         throw new Error();
       }
       const { time, title, originalMessage, tip } = data;
