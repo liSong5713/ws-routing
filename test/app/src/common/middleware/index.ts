@@ -2,9 +2,10 @@ import { Middleware, Context, MiddlewareInterface } from '../../../../../src';
 
 @Middleware({ type: 'before', order: 3 })
 class BeforeMiddleTest implements MiddlewareInterface {
-  use(ctx: Context, next) {
+  async use(ctx: Context, next) {
     console.log('before middleware 1 process');
-    return next();
+    await next();
+    console.log('before middleware 1 process next');
   }
 }
 @Middleware({ type: 'before', order: 2 })

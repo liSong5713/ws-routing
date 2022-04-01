@@ -31,6 +31,8 @@ export class Application extends EventEmitter {
       });
       ws.on('message', function message(data, isBinary) {
         const ctx = new Context(wss, ws, request);
+        // @ts-ignore
+        ctx.size = data.length || data.byteLength;
         const originMessage = data.toString();
         try {
           const { route, message } = JSON.parse(originMessage);

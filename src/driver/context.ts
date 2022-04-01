@@ -6,11 +6,14 @@ const userStorageSymbol = Symbol('__user_storage__');
 export class Context extends EventEmitter {
   status: number = 404;
 
-  //per message route
+  // per message route
   route: string;
 
-  //per message body
+  // per message body
   body: any;
+
+  // per message size
+  size: number = 0;
 
   private [userStorageSymbol] = new Map();
 

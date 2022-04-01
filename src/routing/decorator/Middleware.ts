@@ -4,7 +4,7 @@ import { getMetadataStorage } from '../builder';
 export function Middleware(options: { type: 'before' | 'after'; order?: number }) {
   const { beforeMiddleware, afterMiddleware } = getMetadataStorage();
   return function (target: any) {
-    if (Object.prototype.toString.call(target.prototype.use) !== '[object Function]') {
+    if (typeof target.prototype.use !== 'function') {
       throw new Error(`${target.name} not implement ${target.name}.prototype.use`);
     }
     const { order, type } = options;
