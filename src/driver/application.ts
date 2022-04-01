@@ -6,18 +6,10 @@ export class Application extends EventEmitter {
   wss: WebSocketServer;
   constructor(options?: ServerOptions) {
     super();
-    const { noServer, server } = options || {};
     const self = this;
     const wss = (this.wss = new WebSocketServer(options));
     if (this.listenerCount('error')) {
       this.on('error', console.error);
-    }
-    if (noServer && server) {
-      server.on('upgrade', function upgrade(request, socket, head) {
-        self.wss.handleUpgrade(request, socket, head, function done(ws) {
-          self.wss.emit('connection', ws, request);
-        });
-      });
     }
     wss.on('connection', (ws, request) => {
       ws.on('close', (...args) => {
