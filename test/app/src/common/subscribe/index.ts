@@ -1,23 +1,24 @@
-import { SubscribeEvent } from '../../../../../src';
+import { Subscribe, Event } from '../../../../../src';
 
-export class Subscribe {
-  @SubscribeEvent('error')
+@Subscribe()
+export class SubscribeCenter {
+  @Event('error')
   handleError(...args) {
     console.log('error');
   }
-  @SubscribeEvent('wss:connection')
+  @Event('wss:connection')
   handleWssConnection(...args) {
-    console.log('connection1');
+    console.log('wss:connection1');
   }
-  @SubscribeEvent('wss:connection')
+  @Event('wss:connection')
   handleWss2Connection(...args) {
     console.log('connection2');
   }
-  @SubscribeEvent('ws:close')
+  @Event('ws:close')
   handleWSClose(...args) {
     console.log('ws:close');
   }
-  @SubscribeEvent('ws:error')
+  @Event('ws:error')
   handleWSError(...args) {
     console.log('ws:error');
   }
