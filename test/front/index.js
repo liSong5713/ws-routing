@@ -33,9 +33,9 @@ class RoutingTest {
       if (Object.prototype.toString.call(data) !== '[object Object]') {
         throw new Error();
       }
-      const { time, title, originalMessage, tip } = data;
+      const { route, message } = data;
       const div = document.createElement('div');
-      div.textContent = `time:${time}  | tile:${title} | originalMessage: ${originalMessage} | tip: ${tip}`;
+      div.textContent = `route:${route}  | message: ${message}`;
       this.panel.appendChild(div);
     } catch (error) {
       const div = document.createElement('div');

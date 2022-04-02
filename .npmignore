@@ -38,6 +38,6 @@ logs/
 package-lock.json
 coverage
 tsconfig.json
-
+test/
 #vscode
 .vscode/
