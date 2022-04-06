@@ -25,7 +25,7 @@ npm i ws-routing --save
 
 #### 必要条件
 
-tsconfig.json` 中需要设置以下配置项：
+`tsconfig.json` 中需要设置以下配置项：
 
 ```json
 {
