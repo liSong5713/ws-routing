@@ -5,6 +5,7 @@ import { LogService } from '../logs';
 export class HotelService {
   @Inject()
   logService: LogService;
+
   testServiceInService() {
     const logStr = this.logService.doSomething();
     return logStr + ' ' + 'Hotel Service';

@@ -1,8 +1,8 @@
-import { HotelService } from './../../service/hotels/index';
-import { LogService } from './../../service/logs/index';
+import { HotelService } from '../../service/hotels/index';
+import { LogService } from '../../service/logs/index';
 import { Body, Controller, Ctx, Route, Context, Inject } from '../../../../../src';
 
-@Controller('hotel')
+@Controller('/hotel')
 export class HotelController {
   @Inject()
   logService: LogService;
