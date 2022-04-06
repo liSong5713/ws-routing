@@ -17,7 +17,7 @@ server.on('upgrade', function upgrade(request, socket, head) {
     wr.wss.emit('connection', ws, request);
   });
 });
-wr.on('connection', (...args) => {
+/* wr.on('connection', (...args) => {
   // 创建连接
   console.log('wr.connection');
 });
@@ -25,3 +25,4 @@ wr.on('connection', (...args) => {
 wr.on('error', (error) => {
   console.error(error);
 });
+ */
