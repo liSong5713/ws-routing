@@ -1,5 +1,5 @@
 {
-  "name": "ws-koa",
+  "name": "ws-routing",
   "version": "1.0.0",
   "description": "Create structured, declarative and beautifully organized class-based controllers with heavy decorators usage fo websocket using TypeScript.",
   "main": "./dist/index.js",
@@ -22,9 +22,6 @@
     "typescript": "^3.8.3"
   },
   "engine": ">12.20.1",
-  "publishConfig": {
-    "registry": "http://nexus.17usoft.com/repository/npm-fe/"
-  },
   "dependencies": {
     "glob": "^7.2.0",
     "reflect-metadata": "^0.1.13",
