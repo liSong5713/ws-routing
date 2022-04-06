@@ -2,7 +2,7 @@
 
 基于 [ws](https://github.com/websockets/ws#simple-server) ，通过声明的方式创建控制类并处理 websocket 请求。
 
-![20220402161833-ws-routing-arch.png](https://raw.githubusercontent.com/liSong5713/notebook/main/20220402161833-ws-routing-arch.png?token=AEU6TKXC2TDUOQX5YPVIEZTCJADRQ)png)
+![20220402161833-ws-routing-arch.png](http://m.elongstatic.com/hotel/one/ws-routing-arch.png)
 
 ## 目录
 
