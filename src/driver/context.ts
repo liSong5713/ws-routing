@@ -107,7 +107,7 @@ export class Context {
         return this.ws.send(...args);
       }
     });
-    response.result = Promise.allSettled<boolean | Error>([promiseResult]);
+    response.result = Promise.allSettled([promiseResult]);
     return promiseResult;
   }
   // broadcast to all clients
