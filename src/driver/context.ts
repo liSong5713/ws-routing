@@ -1,9 +1,9 @@
+import { Response } from './response';
 import { IncomingMessage } from 'http';
-import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 
 const userStorageSymbol = Symbol('__user_storage__');
-export class Context extends EventEmitter {
+export class Context {
   status: number = 404;
 
   // per message route
@@ -14,6 +14,8 @@ export class Context extends EventEmitter {
 
   // per message size
   size: number = 0;
+
+  response = new Response();
 
   private [userStorageSymbol] = new Map();
 
@@ -27,9 +29,7 @@ export class Context extends EventEmitter {
     return Array.from(this[userStorageSymbol]);
   }
   // === http ===
-  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {
-    super();
-  }
+  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {}
   get socket() {
     return this.req.socket;
   }
@@ -71,15 +71,17 @@ export class Context extends EventEmitter {
   send(
     data: any,
     options: {
-      mask?: boolean | undefined;
-      binary?: boolean | undefined;
-      compress?: boolean | undefined;
-      fin?: boolean | undefined;
+      mask?: boolean;
+      binary?: boolean;
+      compress?: boolean;
+      fin?: boolean;
     },
   );
   send(...args): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
+    const { response } = this;
+    const promiseResult = new Promise<boolean | Error>((resolve, reject) => {
       if (!args.length) return reject(new Error(`message not be undefined`));
+      response.body = args[0];
       const callback = (err) => {
         if (err) {
           return reject(err);
@@ -89,39 +91,47 @@ export class Context extends EventEmitter {
       args.push(callback);
       const dataType = typeof args[0];
       if (dataType === 'string') {
+        response.size = Buffer.byteLength(args[0]);
         // @ts-ignore
         return this.ws.send(...args);
       }
       if (Buffer.isBuffer(args[0])) {
+        response.size = args[0].length;
         // @ts-ignore
         return this.ws.send(...args);
       }
       if (args[0] !== undefined) {
         args[0] = JSON.stringify(args[0]);
+        response.size = Buffer.byteLength(args[0]);
         // @ts-ignore
         return this.ws.send(...args);
       }
     });
+    response.result = Promise.allSettled<boolean | Error>([promiseResult]);
+    return promiseResult;
   }
   // broadcast to all clients
-  broadcast(data: any): Promise<PromiseSettledResult<boolean>[]> {
+  broadcast(data: any): Promise<PromiseSettledResult<boolean | Error>[]> {
     try {
       if (data === undefined) return Promise.allSettled([Promise.reject(new Error(`message not be undefined`))]);
       if (typeof data !== 'string' && !Buffer.isBuffer(data)) {
         data = JSON.stringify(data);
       }
+      const { response } = this;
+      response.size = Buffer.byteLength(data);
+      response.body = data;
       const sendMsgPromiseList = Array.from(this.wss.clients).map(
         (client) =>
-          new Promise((resolve, reject) => {
+          new Promise<boolean | Error>((resolve, reject) => {
             client.send(data, (error) => {
               if (error) return reject(error);
               resolve(true);
             });
           }),
       );
-      return Promise.allSettled(sendMsgPromiseList) as any;
+      return (response.result = Promise.allSettled(sendMsgPromiseList));
     } catch (error) {
-      return Promise.allSettled([Promise.reject(error)]);
+      return (this.response.result = Promise.allSettled([Promise.reject(error)]));
     }
   }
   close(code?: number, data?: string | Buffer) {

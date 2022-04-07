@@ -162,7 +162,7 @@ export class WsRouting extends Application {
   // overwrite per message handle
   async handlePerMessage(ctx: Context) {
     this[MDSymbol](ctx).catch((error) => {
-      this.emit('error', new InternalServerError(error));
+      this.emit('error', new InternalServerError(error), ctx);
     });
   }
 }
