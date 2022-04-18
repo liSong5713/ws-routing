@@ -1,9 +1,12 @@
+import { Cookies } from './lib/cookies';
 import { Response } from './response';
 import { IncomingMessage } from 'http';
 import WebSocket from 'ws';
 
 const userStorageSymbol = Symbol('__user_storage__');
 export class Context {
+  cookies: Cookies;
+
   status: number = 404;
 
   // per message route
@@ -29,7 +32,9 @@ export class Context {
     return Array.from(this[userStorageSymbol]);
   }
   // === http ===
-  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {}
+  constructor(public wss: WebSocket.Server, public ws: WebSocket.WebSocket, public req: IncomingMessage) {
+    this.cookies = new Cookies(req);
+  }
   get socket() {
     return this.req.socket;
   }
