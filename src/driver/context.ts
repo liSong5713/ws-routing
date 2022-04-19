@@ -7,6 +7,8 @@ const userStorageSymbol = Symbol('__user_storage__');
 export class Context {
   cookies: Cookies;
 
+  originMessage: string;
+
   status: number = 404;
 
   // per message route

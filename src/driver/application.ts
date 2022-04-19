@@ -25,14 +25,13 @@ export class Application extends EventEmitter {
         const ctx = new Context(wss, ws, request);
         // @ts-ignore
         ctx.size = data.length || data.byteLength;
-        const originMessage = data.toString();
+        ctx.originMessage = data.toString();
         try {
-          const { route, message } = JSON.parse(originMessage);
+          const { route, message } = JSON.parse(ctx.originMessage);
           ctx.body = message;
           ctx.route = route;
         } catch (error) {
           // Non-standard message
-          ctx.body = originMessage;
         }
         self.handlePerMessage(ctx);
       });
