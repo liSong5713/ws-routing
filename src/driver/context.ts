@@ -55,7 +55,7 @@ export class Context {
   }
   get ip() {
     const { socket } = this.req;
-    const proxyIps = (this.req.headers['X-Forwarded-For'] as string)?.split(/\s*,\s*/) || [];
+    const proxyIps = (this.req.headers['x-forwarded-for'] as string)?.split(/\s*,\s*/) || [];
     return proxyIps[0] || socket.remoteAddress;
   }
 
