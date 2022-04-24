@@ -120,7 +120,7 @@ export class WsRouting extends Application {
     };
     this.on('error', proxyFn('error'));
     // ws server
-    this.wss.on('connection', proxyFn('wss:connection'));
+    this.wss.on('connection', proxyFn('wss:connection').bind(this,this.wss));
     this.wss.on('error', proxyFn('error'));
     this.wss.on('wss:close', proxyFn('wss:close'));
     // ws socket
