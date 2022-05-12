@@ -139,7 +139,7 @@ export class Context {
           new Promise<boolean | Error>((resolve, reject) => {
             try {
               if (client.readyState !== WebSocket.OPEN)
-                return reject(new Error(`WebSocket is not open: readyState ${this.readyState} `));
+                return reject(new Error(`WebSocket is not open: readyState ${client.readyState} `));
 
               client.send(data, (error) => {
                 if (error) return reject(error);
