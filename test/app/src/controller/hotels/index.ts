@@ -16,8 +16,8 @@ export class HotelController {
     ctx.send(body);
   }
   @Route('put')
-  putHotel(@Ctx() ctx: Context, @Body() body) {
+  async putHotel(@Ctx() ctx: Context, @Body() body) {
     const result = this.hotelService.testServiceInService();
-    ctx.send(body + ' : ' + result);
+    await ctx.send(body + ' : ' + result);
   }
 }

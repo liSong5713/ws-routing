@@ -74,7 +74,7 @@ export class Context {
   get readyState() {
     return this.ws.readyState;
   }
-  send(data: any): Promise<boolean | Error>;
+  send(data: any): Promise<PromiseSettledResult<boolean | Error>[]>;
   send(
     data: any,
     options: {
@@ -84,38 +84,45 @@ export class Context {
       fin?: boolean;
     },
   );
-  send(...args): Promise<boolean | Error> {
-    const { response } = this;
+  send(...args): Promise<PromiseSettledResult<boolean | Error>[]> {
     const promiseResult = new Promise<boolean | Error>((resolve, reject) => {
+      if (this.readyState !== WebSocket.OPEN)
+        return reject(new Error(`WebSocket is not open: readyState ${this.readyState} `));
       if (!args.length) return reject(new Error(`message not be undefined`));
+
+      const { response } = this;
       response.body = args[0];
+
       const callback = (err) => {
-        if (err) {
-          return reject(err);
-        }
+        if (err) return reject(err);
         resolve(true);
       };
       args.push(callback);
-      const dataType = typeof args[0];
-      if (dataType === 'string') {
-        response.size = Buffer.byteLength(args[0]);
-        // @ts-ignore
-        return this.ws.send(...args);
-      }
-      if (Buffer.isBuffer(args[0])) {
-        response.size = args[0].length;
-        // @ts-ignore
-        return this.ws.send(...args);
-      }
-      if (args[0] !== undefined) {
-        args[0] = JSON.stringify(args[0]);
-        response.size = Buffer.byteLength(args[0]);
-        // @ts-ignore
-        return this.ws.send(...args);
+
+      try {
+        const dataType = typeof args[0];
+        if (dataType === 'string') {
+          response.size = Buffer.byteLength(args[0]);
+          // @ts-ignore
+          return this.ws.send(...args);
+        }
+        if (Buffer.isBuffer(args[0])) {
+          response.size = args[0].length;
+          // @ts-ignore
+          return this.ws.send(...args);
+        }
+        if (args[0] !== undefined) {
+          args[0] = JSON.stringify(args[0]);
+          response.size = Buffer.byteLength(args[0]);
+          // @ts-ignore
+          return this.ws.send(...args);
+        }
+      } catch (error: unknown) {
+        // ws.readyState is connecting
+        reject(error as Error);
       }
     });
-    response.result = Promise.allSettled([promiseResult]);
-    return promiseResult;
+    return Promise.allSettled([promiseResult]);
   }
   // broadcast to all clients
   broadcast(data: any): Promise<PromiseSettledResult<boolean | Error>[]> {
@@ -130,10 +137,17 @@ export class Context {
       const sendMsgPromiseList = Array.from(this.wss.clients).map(
         (client) =>
           new Promise<boolean | Error>((resolve, reject) => {
-            client.send(data, (error) => {
-              if (error) return reject(error);
-              resolve(true);
-            });
+            try {
+              if (client.readyState !== WebSocket.OPEN)
+                return reject(new Error(`WebSocket is not open: readyState ${this.readyState} `));
+
+              client.send(data, (error) => {
+                if (error) return reject(error);
+                resolve(true);
+              });
+            } catch (error) {
+              reject(error);
+            }
           }),
       );
       return (response.result = Promise.allSettled(sendMsgPromiseList));
